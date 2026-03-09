@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st # pyright: ignore[reportMissingImports]
 from HITL_backend import chatbot, retrieve_chats, ingest_pdf, thread_has_document, thread_document_metadata
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from HITL_backend import model
