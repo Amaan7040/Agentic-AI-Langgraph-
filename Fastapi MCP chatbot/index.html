@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatterBot - AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #242424;
+            --bg-hover: #2a2a2a;
+            --text-primary: #e4e4e7;
+            --text-secondary: #a1a1aa;
+            --text-dim: #71717a;
+            --accent-primary: #8b5cf6;
+            --accent-hover: #7c3aed;
+            --accent-dim: #6d28d9;
+            --border-color: #333333;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .sidebar-header p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .new-chat-btn {
+            width: 100%;
+            padding: 12px 16px;
+            margin: 16px 0;
+            background-color: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .new-chat-btn:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .new-chat-btn:active {
+            transform: translateY(0);
+        }
+
+        .conversations {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .conversation-item {
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            background-color: var(--bg-tertiary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .conversation-item:hover {
+            background-color: var(--bg-hover);
+            border-color: var(--border-color);
+        }
+
+        .conversation-item.active {
+            background-color: var(--accent-dim);
+            border-color: var(--accent-primary);
+        }
+
+        .conversation-title {
+            font-size: 14px;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Main Chat Area */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 20px 24px;
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chat-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            margin-bottom: 24px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .message-role {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .message.user .message-role {
+            color: var(--accent-primary);
+        }
+
+        .message.assistant .message-role {
+            color: var(--success);
+        }
+
+        .message-content {
+            padding: 16px 20px;
+            background-color: var(--bg-tertiary);
+            border-radius: 12px;
+            line-height: 1.6;
+            font-size: 14px;
+            border: 1px solid var(--border-color);
+        }
+
+        .message.user .message-content {
+            background-color: var(--accent-dim);
+            border-color: var(--accent-primary);
+        }
+
+        .tool-usage {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin: 8px 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .tool-indicator {
+            width: 8px;
+            height: 8px;
+            background-color: var(--warning);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .tool-name {
+            font-weight: 500;
+            color: var(--warning);
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 16px 20px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--text-dim);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 20px 24px;
+            background-color: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .input-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #messageInput {
+            width: 100%;
+            padding: 14px 16px;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            resize: none;
+            max-height: 150px;
+            min-height: 50px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        #messageInput:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background-color: var(--bg-secondary);
+        }
+
+        #messageInput::placeholder {
+            color: var(--text-dim);
+        }
+
+        .send-btn {
+            padding: 14px 24px;
+            background-color: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--bg-hover);
+        }
+
+        /* Message formatting */
+        .message-content strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .message-content ul,
+        .message-content ol {
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+
+        .message-content li {
+            margin-bottom: 4px;
+        }
+
+        .message-content p {
+            margin-bottom: 12px;
+        }
+
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-content code {
+            background-color: var(--bg-secondary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .message-content pre {
+            background-color: var(--bg-secondary);
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+
+        .message-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        /* Empty state */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-dim);
+            text-align: center;
+            padding: 40px;
+        }
+
+        .empty-state h3 {
+            font-size: 24px;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            max-width: 400px;
+        }
+
+        /* Loading state */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--bg-tertiary);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -280px;
+                z-index: 100;
+                transition: left 0.3s;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>ChatterBot</h1>
+                <p>AI Assistant powered by MCP</p>
+                <button class="new-chat-btn" onclick="startNewChat()">New Chat</button>
+            </div>
+            <div class="conversations" id="conversationsList">
+                <!-- Conversations will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="main">
+            <div class="chat-header">
+                <h2 id="chatTitle">ChatterBot</h2>
+            </div>
+            <div class="chat-container" id="chatContainer">
+                <div class="empty-state">
+                    <h3>Welcome to ChatterBot</h3>
+                    <p>Start a conversation by typing a message below. I can help you with web searches, stock prices, weather updates, and more.</p>
+                </div>
+            </div>
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <div class="input-container">
+                        <textarea 
+                            id="messageInput" 
+                            placeholder="Type your message here..."
+                            rows="1"
+                            onkeydown="handleKeyPress(event)"
+                        ></textarea>
+                    </div>
+                    <button class="send-btn" onclick="sendMessage()" id="sendBtn">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentThreadId = null;
+        let ws = null;
+        let isProcessing = false;
+
+        // Auto-resize textarea
+        const textarea = document.getElementById('messageInput');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+        });
+
+        // Handle Enter key
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // Initialize WebSocket
+        function initWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/chat`;
+            
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = function() {
+                console.log('WebSocket connected');
+            };
+
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+
+            ws.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onclose = function() {
+                console.log('WebSocket disconnected');
+                setTimeout(initWebSocket, 3000);
+            };
+        }
+
+        // Handle WebSocket messages
+        function handleWebSocketMessage(data) {
+            const chatContainer = document.getElementById('chatContainer');
+            
+            switch(data.type) {
+                case 'thread_id':
+                    currentThreadId = data.thread_id;
+                    break;
+                
+                case 'tool_call':
+                    addToolUsage(data.tool_name);
+                    break;
+                
+                case 'token':
+                    appendToLastMessage(data.content);
+                    break;
+                
+                case 'done':
+                    finishResponse();
+                    break;
+                
+                case 'error':
+                    showError(data.content);
+                    isProcessing = false;
+                    updateSendButton();
+                    break;
+            }
+        }
+
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message || isProcessing) return;
+            
+            isProcessing = true;
+            updateSendButton();
+            
+            // Clear input
+            input.value = '';
+            input.style.height = 'auto';
+            
+            // Add user message
+            addMessage('user', message);
+            
+            // Remove empty state
+            const emptyState = document.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+            
+            // Prepare assistant message placeholder
+            addMessage('assistant', '', true);
+            
+            // Send via WebSocket
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    message: message,
+                    thread_id: currentThreadId
+                }));
+            } else {
+                // Fallback to HTTP
+                await sendMessageHTTP(message);
+            }
+        }
+
+        // Fallback HTTP send
+        async function sendMessageHTTP(message) {
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        thread_id: currentThreadId
+                    })
+                });
+                
+                const data = await response.json();
+                currentThreadId = data.thread_id;
+                
+                // Show tool calls
+                if (data.tool_calls && data.tool_calls.length > 0) {
+                    data.tool_calls.forEach(tool => {
+                        addToolUsage(tool.name);
+                    });
+                }
+                
+                // Update last message
+                const messages = document.querySelectorAll('.message.assistant');
+                const lastMessage = messages[messages.length - 1];
+                const content = lastMessage.querySelector('.message-content');
+                content.innerHTML = formatMessage(data.response);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Failed to send message');
+            } finally {
+                isProcessing = false;
+                updateSendButton();
+            }
+        }
+
+        // Add message to chat
+        function addMessage(role, content, isPlaceholder = false) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const roleLabel = role === 'user' ? 'You' : 'ChatterBot';
+            
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <span class="message-role">${roleLabel}</span>
+                </div>
+                <div class="message-content">
+                    ${isPlaceholder ? '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>' : formatMessage(content)}
+                </div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Add tool usage indicator
+        function addToolUsage(toolName) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messages = document.querySelectorAll('.message.assistant');
+            const lastMessage = messages[messages.length - 1];
+            
+            if (!lastMessage) return;
+            
+            const content = lastMessage.querySelector('.message-content');
+            const existingTools = content.querySelector('.typing-indicator');
+            
+            const toolDiv = document.createElement('div');
+            toolDiv.className = 'tool-usage';
+            toolDiv.innerHTML = `
+                <div class="tool-indicator"></div>
+                <span>Using tool: <span class="tool-name">${toolName}</span></span>
+            `;
+            
+            if (existingTools) {
+                content.insertBefore(toolDiv, existingTools);
+            } else {
+                content.insertBefore(toolDiv, content.firstChild);
+            }
+            
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Append to last message (streaming)
+        function appendToLastMessage(token) {
+            const messages = document.querySelectorAll('.message.assistant');
+            const lastMessage = messages[messages.length - 1];
+            
+            if (!lastMessage) return;
+            
+            const content = lastMessage.querySelector('.message-content');
+            const typingIndicator = content.querySelector('.typing-indicator');
+            
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+            
+            // Find or create text container
+            let textContainer = content.querySelector('.response-text');
+            if (!textContainer) {
+                textContainer = document.createElement('div');
+                textContainer.className = 'response-text';
+                content.appendChild(textContainer);
+            }
+            
+            textContainer.textContent += token;
+            
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Finish response
+        function finishResponse() {
+            const messages = document.querySelectorAll('.message.assistant');
+            const lastMessage = messages[messages.length - 1];
+            
+            if (!lastMessage) return;
+            
+            const content = lastMessage.querySelector('.message-content');
+            const textContainer = content.querySelector('.response-text');
+            
+            if (textContainer) {
+                const rawText = textContainer.textContent;
+                textContainer.innerHTML = formatMessage(rawText);
+            }
+            
+            isProcessing = false;
+            updateSendButton();
+            
+            // Reload conversations
+            loadConversations();
+        }
+
+        // Format message content
+        function formatMessage(text) {
+            if (!text) return '';
+            
+            // Convert markdown-like formatting
+            let formatted = text
+                // Bold
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                // Lists
+                .replace(/^[\*\-]\s+(.+)$/gm, '<li>$1</li>')
+                // Line breaks
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>');
+            
+            // Wrap in paragraphs if not already
+            if (!formatted.includes('<p>')) {
+                formatted = `<p>${formatted}</p>`;
+            }
+            
+            // Wrap list items
+            formatted = formatted.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+            
+            return formatted;
+        }
+
+        // Show error
+        function showError(message) {
+            const chatContainer = document.getElementById('chatContainer');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'message assistant';
+            errorDiv.innerHTML = `
+                <div class="message-header">
+                    <span class="message-role">Error</span>
+                </div>
+                <div class="message-content" style="color: var(--error);">
+                    ${message}
+                </div>
+            `;
+            chatContainer.appendChild(errorDiv);
+        }
+
+        // Update send button state
+        function updateSendButton() {
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = isProcessing;
+            sendBtn.textContent = isProcessing ? 'Sending...' : 'Send';
+        }
+
+        // Start new chat
+        function startNewChat() {
+            currentThreadId = null;
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.innerHTML = `
+                <div class="empty-state">
+                    <h3>Welcome to ChatterBot</h3>
+                    <p>Start a conversation by typing a message below. I can help you with web searches, stock prices, weather updates, and more.</p>
+                </div>
+            `;
+            document.getElementById('chatTitle').textContent = 'ChatterBot';
+        }
+
+        // Load conversations
+        async function loadConversations() {
+            try {
+                const response = await fetch('/api/threads');
+                const data = await response.json();
+                
+                const conversationsList = document.getElementById('conversationsList');
+                
+                if (data.threads.length === 0) {
+                    conversationsList.innerHTML = '<p style="padding: 16px; color: var(--text-dim); font-size: 13px; text-align: center;">No conversations yet</p>';
+                    return;
+                }
+                
+                conversationsList.innerHTML = data.threads.map(threadId => `
+                    <div class="conversation-item ${threadId === currentThreadId ? 'active' : ''}" onclick="loadThread('${threadId}')">
+                        <div class="conversation-title">${threadId.substring(0, 8)}...</div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading conversations:', error);
+            }
+        }
+
+        // Load specific thread
+        async function loadThread(threadId) {
+            try {
+                const response = await fetch(`/api/thread/${threadId}`);
+                const data = await response.json();
+                
+                currentThreadId = threadId;
+                
+                const chatContainer = document.getElementById('chatContainer');
+                chatContainer.innerHTML = '';
+                
+                data.messages.forEach(msg => {
+                    addMessage(msg.role, msg.content);
+                });
+                
+                document.getElementById('chatTitle').textContent = `Chat ${threadId.substring(0, 8)}`;
+                
+                // Update active state
+                document.querySelectorAll('.conversation-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                event.target.closest('.conversation-item').classList.add('active');
+                
+            } catch (error) {
+                console.error('Error loading thread:', error);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initWebSocket();
+            loadConversations();
+        });
+    </script>
+</body>
+</html>

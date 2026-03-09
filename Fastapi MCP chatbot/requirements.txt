@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+langchain-core
+langchain-groq
+langchain-community
+langgraph
+langchain-mcp-adapters
+fastmcp
+websockets
+pydantic
+requests
+aiosqlite

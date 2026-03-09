@@ -1,0 +1,26 @@
+# Core Dependencies
+langgraph
+langchain
+langchain-core
+langchain-groq
+langchain-community
+
+# MCP Dependencies
+fastmcp
+langchain-mcp-adapters
+
+# Frontend
+streamlit
+
+# Utilities
+python-dotenv
+requests
+duckduckgo-search
+
+# Tracing (Optional)
+langsmith
+
+# Additional
+sqlite3
+uuid
+asyncio
